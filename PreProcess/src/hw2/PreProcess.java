@@ -59,16 +59,21 @@ public class PreProcess {
 			// parse text into Sentances 
 			String sentences[] = sDetector.sentDetect(rawText);
 			for (int x = 0; x < sentences.length; x++) { // add start and end tags to all sentences
-				sentences[x] = "SS " + sentences[x] + " /SS";
-			}
+				String[] tokenizedSentence = tokenizer.tokenize(sentences[x]);
+				System.out.print("<s> "); // start tag
+				for (int y = 0; y < tokenizedSentence.length; y++) {
+					if (y == tokenizedSentence.length - 1) {
+						System.out.print(tokenizedSentence[y]);
+					} else {
+						System.out.print(tokenizedSentence[y] + " ");
+					}
 
-			// tokenize all sentences and output to screen
-			for (String sent : sentences) {
-				String tokens[] = tokenizer.tokenize(sent); // split sentences into tokens
-				for (String tok : tokens) {
-					System.out.print(tok + " "); // tokens are separated by spaces
 				}
-				System.out.print("\n\n"); // separate sentances with empty line
+				if (x != sentences.length - 1) {
+					System.out.print(" </s>\n\n");
+				} else {
+					System.out.print(" </s>");
+				}
 			}
 			System.out.print("\0"); // EOF
 
