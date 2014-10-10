@@ -1,0 +1,5 @@
+<s> JOHN READ MOBY DICK </s>
+
+<s> MARY READ A DIFFERENT BOOK </s>
+
+<s> SHE READ A BOOK BY CHER </s>

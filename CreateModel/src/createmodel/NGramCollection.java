@@ -82,6 +82,35 @@ public class NGramCollection implements Serializable {
 	}
 
 	/**
+	 * finds all NGrams that start with the given tokens and returns the count
+	 *
+	 * @param tokens
+	 * @return
+	 */
+	public int countAnyEnding(String[] tokens) throws NGramException {
+		// cannot count ending if we have too many tokens
+		if (this.size < tokens.length) {
+			throw new NGramException("To many tokens for model size: " + tokens.length);
+		}
+		int count = 0;
+		Set<NGram> val = this.nGrams.keySet();
+		for (NGram temp : val) { // for all NGrams of nGrams.size 
+			int correct = 0;
+			for (int x = 0; x < tokens.length; x++) {
+				if (temp.tokens[x].equals(tokens[x])) {
+					correct++;
+				}
+			}
+			// if all tokens were matched
+			if (correct == tokens.length) {
+				count+= this.countNGram(temp);
+			}
+		}
+		return count;
+
+	}
+
+	/**
 	 * parses a sentence and returns a list of all possible NGrams of the given
 	 * container size. (bi-gram,tri-gram, etc)
 	 *

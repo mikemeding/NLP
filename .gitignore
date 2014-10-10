@@ -10,3 +10,6 @@ hs_err_pid*
 /CreateModel/nbproject/private/
 /CreateModel/build/
 /CreateModel/dist/
+/TestModel/nbproject/private/
+/TestModel/build/
+/TestModel/dist/
