@@ -23,28 +23,28 @@ public class TestModel {
 	 */
 	public static void main(String[] args) {
 		// REFACTOR THIS WHEN DONE
-		String[] fakeArgs = new String[10];
-		fakeArgs[0] = "doc/model.bin";
+//		String[] args = new String[10];
+//		args[1] = "doc/model.bin";
 
+		// Read in my model
 		NGramModel model = null;
 		try {
-			model = readModel(fakeArgs[0]);
+			model = readModel(args[1]);
 		} catch (IOException ioe) {
 			System.err.print(ioe.getMessage());
 			System.exit(-1); // model parse error
 		}
 
+		// parse test-text (use createmodel input as template)
 		NGram[] nGram = model.model[1].parseSentence(new String[]{"<s>", "JOHN", "READ", "A", "BOOK", "</s>"});
 
+		// compute probability of parse text and return
 		try {
 			double logProb = 0.0;
 			for (NGram sentGram : nGram) {
 				logProb += model.logProbability(sentGram, sentGram.size);
 			}
-			System.out.println("logProb:" + logProb);
-
-			int x = 100; // STOP HERE	
-
+			System.out.println("log base 10 prob:" + logProb);
 		} catch (NGramException nge) {
 			System.err.println(nge.getMessage());
 			System.exit(-1); // error probability calc
