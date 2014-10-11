@@ -9,8 +9,10 @@ import createmodel.NGram;
 import createmodel.NGramException;
 import createmodel.NGramModel;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.nio.CharBuffer;
 
 /**
  *
@@ -21,10 +23,11 @@ public class TestModel {
 	/**
 	 * @param args the command line arguments
 	 */
-	public static void main(String[] args) {
-		// REFACTOR THIS WHEN DONE
-//		String[] args = new String[10];
-//		args[1] = "doc/model.bin";
+	public static void main(String[] arxgs) throws IOException {
+
+		String[] args = new String[10];
+		args[0] = "doc/preprocessed-test-data.txt";
+		args[1] = "doc/FinalModel.bin";
 
 		// Read in my model
 		NGramModel model = null;
@@ -35,19 +38,41 @@ public class TestModel {
 			System.exit(-1); // model parse error
 		}
 
-		// parse test-text (use createmodel input as template)
-		NGram[] nGram = model.model[1].parseSentence(new String[]{"<s>", "JOHN", "READ", "A", "BOOK", "</s>"});
-
-		// compute probability of parse text and return
+		// read incomming test-text file
+		FileReader inputStream = null;
+		CharBuffer cbuf = CharBuffer.allocate(100000); // size limitation
+		String rawTestData = null;
 		try {
-			double logProb = 0.0;
-			for (NGram sentGram : nGram) {
-				logProb += model.logProbability(sentGram, sentGram.size);
+			inputStream = new FileReader(args[0]);
+			int bytesRead = inputStream.read(cbuf); // read entire file into buffer
+			rawTestData = new String(cbuf.array(), 0, bytesRead);
+		} catch (IOException ioe) {
+			System.err.println(ioe.getMessage());
+			System.exit(-1);
+		} finally {
+			if (inputStream != null) {
+				inputStream.close();
 			}
-			System.out.println("log base 10 prob:" + logProb);
-		} catch (NGramException nge) {
-			System.err.println(nge.getMessage());
-			System.exit(-1); // error probability calc
+		}
+
+		// parse text into Sentances 
+		String sentences[] = rawTestData.split("\n\n");
+		for (String sent : sentences) { // for each sentence
+			// parse into array of nGrams
+			NGram[] nGram = model.model[model.model.length - 1].parseSentence(sent.split(" "));
+
+			// compute probability of sequence of nGrams and return
+			try {
+				double logProb = 0.0;
+				for (NGram sentGram : nGram) {
+					logProb += model.logProbability(sentGram, sentGram.size);
+				}
+				System.out.println(sent);
+				System.out.println("log base 10 prob:" + logProb);
+			} catch (NGramException nge) {
+				System.err.println(nge.getMessage());
+				System.exit(-1); // error probability calc
+			}
 		}
 
 	}

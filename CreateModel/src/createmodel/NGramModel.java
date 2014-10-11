@@ -112,6 +112,9 @@ public class NGramModel implements Serializable {
 	private double probabilityNGram(NGram nGram, int modelSize) throws NGramException {
 		int numerCount = this.model[modelSize - 1].countNGram(nGram);
 		int denomCount = this.model[modelSize - 1].countAnyEnding(Arrays.copyOfRange(nGram.tokens, 0, modelSize - 1));
+		if(numerCount == 0 || denomCount == 0){
+			return (double) 1;
+		}
 		return (double) numerCount / denomCount;
 	}
 }
