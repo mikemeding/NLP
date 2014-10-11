@@ -5,11 +5,5 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 /PreProcess/nbproject/private/
-/PreProcess/build/
-/PreProcess/dist/
 /CreateModel/nbproject/private/
-/CreateModel/build/
-/CreateModel/dist/
 /TestModel/nbproject/private/
-/TestModel/build/
-/TestModel/dist/
