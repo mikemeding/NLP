@@ -23,11 +23,19 @@ public class TestModel {
 	/**
 	 * @param args the command line arguments
 	 */
-	public static void main(String[] arxgs) throws IOException {
+	public static void main(String[] args) throws IOException {
+//		String[] args = new String[10];
+		if (args.length < 3) {
+			System.err.println("Incorrect arguments. [test-data.txt][model-data.bin][val]");
+			System.exit(-1);
+		}
 
-		String[] args = new String[10];
-		args[0] = "doc/preprocessed-test-data.txt";
-		args[1] = "doc/FinalModel.bin";
+//		//TEST DATA
+//		args[0] = "doc/smallTest.txt";
+//		args[1] = "doc/model.bin";
+//		args[2] = ".03";
+		// parse additive constant
+		double additiveConstant = Double.parseDouble(args[2]);
 
 		// Read in my model
 		NGramModel model = null;
@@ -55,25 +63,29 @@ public class TestModel {
 			}
 		}
 
+		System.out.println("TEST DATA:");
+
 		// parse text into Sentances 
 		String sentences[] = rawTestData.split("\n\n");
+		double logProb = 0.0;
 		for (String sent : sentences) { // for each sentence
 			// parse into array of nGrams
 			NGram[] nGram = model.model[model.model.length - 1].parseSentence(sent.split(" "));
 
 			// compute probability of sequence of nGrams and return
 			try {
-				double logProb = 0.0;
+
 				for (NGram sentGram : nGram) {
-					logProb += model.logProbability(sentGram, sentGram.size);
+					logProb += model.logProbability(sentGram, sentGram.size, additiveConstant);
 				}
 				System.out.println(sent);
-				System.out.println("log base 10 prob:" + logProb);
 			} catch (NGramException nge) {
 				System.err.println(nge.getMessage());
 				System.exit(-1); // error probability calc
 			}
 		}
+
+		System.out.println("\nLog base 10 prob: " + logProb);
 
 	}
 

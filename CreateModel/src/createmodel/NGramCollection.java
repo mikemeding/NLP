@@ -13,7 +13,7 @@ import java.util.Set;
  */
 public class NGramCollection implements Serializable {
 
-	Map<NGram, NGramProperties> nGrams = new HashMap<>();
+	Map<NGram, NGramProperties> nGrams = new HashMap<NGram,NGramProperties>();
 	int size; // 1 = uni-gram, 2 = bi-gram, 3 = tri-gram, ... etc
 
 	public NGramCollection(int size) {
@@ -118,7 +118,7 @@ public class NGramCollection implements Serializable {
 	 * @return
 	 */
 	public NGram[] parseSentence(String[] tokens) {
-		ArrayList<NGram> temp = new ArrayList<>();
+		ArrayList<NGram> temp = new ArrayList<NGram>();
 		for (int x = 0; x < tokens.length; x++) {
 			if (x + this.size <= tokens.length) {
 				temp.add(new NGram(Arrays.copyOfRange(tokens, x, x + this.size)));

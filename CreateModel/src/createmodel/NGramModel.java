@@ -52,9 +52,10 @@ public class NGramModel implements Serializable {
 	 *
 	 * @param modelSize
 	 * @param nGram
+	 * @param additiveConstant
 	 * @return
 	 */
-	public double logProbability(NGram nGram, int modelSize) throws NGramException {
+	public double logProbability(NGram nGram, int modelSize, double additiveConstant) throws NGramException {
 		// if single unigram
 		if (nGram.size == 1) {
 			double prob = probabilityUnigram(nGram);
@@ -72,7 +73,7 @@ public class NGramModel implements Serializable {
 			return Math.log10(sum) * (-1);
 		} else {
 			// if not unigram model
-			return Math.log10((double) probabilityNGram(nGram, nGram.size)) * (-1);
+			return Math.log10((double) probabilityNGram(nGram, nGram.size, additiveConstant)) * (-1);
 
 		}
 
@@ -109,11 +110,13 @@ public class NGramModel implements Serializable {
 	 * @param modelSize
 	 * @return
 	 */
-	private double probabilityNGram(NGram nGram, int modelSize) throws NGramException {
-		int numerCount = this.model[modelSize - 1].countNGram(nGram);
-		int denomCount = this.model[modelSize - 1].countAnyEnding(Arrays.copyOfRange(nGram.tokens, 0, modelSize - 1));
-		if(numerCount == 0 || denomCount == 0){
-			return (double) 1;
+	private double probabilityNGram(NGram nGram, int modelSize, double additiveConstant) throws NGramException {
+		double numerCount = (double) this.model[modelSize - 1].countNGram(nGram);
+		numerCount += additiveConstant;
+		double denomCount = (double) this.model[modelSize - 1].countAnyEnding(Arrays.copyOfRange(nGram.tokens, 0, modelSize - 1));
+		denomCount += (1 + additiveConstant);
+		if (numerCount == 0) { // will never happen if smoothing is applied
+			throw new NGramException("-Infinity. Not possible with given data.");
 		}
 		return (double) numerCount / denomCount;
 	}
