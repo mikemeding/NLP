@@ -8,16 +8,19 @@ import os
 import sys
 import nltk
 import nltk.metrics.confusionmatrix as cm
+from nltk import word_tokenize
+from nltk.corpus import brown
+
 
 __author__ = "arum@cs.uml.edu"
 
 
 # _DEBUG = 2
-#_DEBUG = 1
+# _DEBUG = 1
 _DEBUG = 0
 
 CORPUS_DIR = "./imdb_corpus"
-#os.chdir(CORPUS_DIR)
+# os.chdir(CORPUS_DIR)
 
 
 class Instance(object):
@@ -94,7 +97,7 @@ def read_corpus(label, label_dir, text_dir):
             else:
                 continue
 
-            #print title, all_labels, clabel
+            # print title, all_labels, clabel
             instance = Instance(title, text, clabel, all_labels)
 
             data.append(instance)
@@ -125,13 +128,46 @@ def extract_features(instance):
     Returns:
        {'feature_name' : feature_value} - feature hashtable
     """
-    text = instance.text
     feature_set = {}
-    feature_set["firstword"] = text.split()[0]
-    feature_set["firstletter"] = text[0]
-    feature_set["lastword"] = text.split()[-1]
-    feature_set["lastletter"] = text[-1]
-    return feature_set
+    text = instance.text
+
+    new_feature_set = 1
+    # VERY BAD FEATURE SET
+    if new_feature_set:
+        feature_set["firstword"] = text.split()[0]
+        feature_set["firstletter"] = text[0]
+        feature_set["lastword"] = text.split()[-1]
+        feature_set["lastletter"] = text[-1]
+        return feature_set
+
+    # 5 MOST COMMON NOUNS
+    else:
+
+        tokens = word_tokenize(text) # tokenize text
+        patterns = [
+            (r'.*ing$', 'VBG'),  # gerunds
+            (r'(The|the|A|a|An|an)$', 'AT'),  # articles
+            (r'.*able$', 'JJ'),  # adjectives
+            (r'.*ness$', 'NN'),  # nouns formed from adjectives
+            (r'.*ly$', 'RB'),  # adverbs
+            (r'.*ed$', 'VBD'),  # simple past
+            (r'.*es$', 'VBZ'),  # 3rd singular present
+            (r'.*ould$', 'MD'),  # modals
+            (r'.*\'s$', 'NN$'),  # possessive nouns
+            (r'.*s$', 'NNS'),  # plural nouns
+            (r'^-?[0-9]+(.[0-9]+)?$', 'CD'),  # cardinal numbers
+            (r'.*', 'NN')  # nouns (default)
+        ]
+
+        # BAD POS TAGGER
+
+        tagger = nltk.RegexpTagger(patterns)
+        tagged_data = tagger.tag(tokens)
+        print tagged_data
+
+        freqDist = nltk.FreqDist(tokens)
+        freqDist._sort_keys_by_value()
+        print freqDist
 
 
 def make_training_data(data):
@@ -169,6 +205,38 @@ def split_data(data, category, dev_frac=.3):
     return training_set, dev_set
 
 
+def analyze_error(classifier, dev_d, category):
+    guess = []
+    actual = []
+    not_category = "Not_" + category
+
+    for e in dev_d:
+        guess.append(classifier.classify(e[0]))
+        actual.append(e[1])
+        # print "Our Classifier: %s" % guess
+        # print "Actual Value: %s" % actual
+
+    # construct confusion matrix with given arrays
+    cm = nltk.ConfusionMatrix(actual, guess)
+    print(cm.pp(sort_by_count=True))
+
+    # get counts for calculations
+    TP = cm.__getitem__([category, category])  # true positive (our prediction was correct)
+    FP = cm.__getitem__([category, not_category])  # false positive (we predict "Not" when the opposite is true)
+    FN = cm.__getitem__([not_category, category])  # false negitive (vice versa)
+
+    # lol this writes just like pseudo-code
+    precision = TP / (TP + FP)
+    recall = TP / (TP + FN)
+    f_score = (2 * precision * recall) / (precision + recall)
+
+    # Print error results
+    print "Accuracy: ", nltk.classify.accuracy(classifier, dev_d)
+    print "Precision: ", precision
+    print "Recall: ", recall
+    print "F-Measure: ", f_score
+
+
 if __name__ == '__main__':
     import argparse
     import random
@@ -177,7 +245,7 @@ if __name__ == '__main__':
     parser.add_argument('category', action='store', type=str,
                         help="One of 10 Genre Categories: %s" % categories)
 
-    #args = parser.parse_args()
+    # args = parser.parse_args()
     args = parser.parse_args(['Action'])
     category = args.category
 
@@ -187,19 +255,25 @@ if __name__ == '__main__':
         sys.exit()
 
 
-    # load up the training and test data
+    # load up the training and test data (arrays of Instances)
     training_data = read_corpus(category, 'labels/training', 'records')
-    test_data = read_corpus(category, 'labels/test', 'records')
+    test_data = read_corpus(category, 'labels/test', 'records')  # ignore this for now
 
     # split training data into train and dev sets
     training_set, dev_set = split_data(training_data, category, .3)
 
-    # do it
+    # create our classifier using our feature set
     train_d = make_training_data(training_set)
     classifier = make_classifier(train_d)
 
+    # get our dev set to test our classifier on
     dev_d = make_training_data(dev_set)
-    print nltk.classify.accuracy(classifier, dev_d)
-    for e in dev_d:
-        print classifier.classify(e[0]), e[1]
+
+    # find out how bad it is using confusion matrix
+    analyze_error(classifier, dev_d, category)  # figure out counts for TP and TN
+
+
+
+
+
 
