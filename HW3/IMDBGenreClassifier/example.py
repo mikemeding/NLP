@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 This is sample code for Homework Assignment #3 in Fall 2014 91.530/91.460
 Natural Language Processing course, @ Computer Science Department @
@@ -11,9 +12,7 @@ import nltk.metrics.confusionmatrix as cm
 from nltk import word_tokenize
 from nltk.corpus import brown
 
-
-__author__ = "arum@cs.uml.edu"
-
+new_feature_set = 0
 
 # _DEBUG = 2
 # _DEBUG = 1
@@ -21,7 +20,6 @@ _DEBUG = 0
 
 CORPUS_DIR = "./imdb_corpus"
 # os.chdir(CORPUS_DIR)
-
 
 class Instance(object):
     """ Stores all information available about a given instance """
@@ -37,7 +35,7 @@ class Instance(object):
 
 
 categories = ['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', \
-              'Mystery', 'Romance', 'Sci-Fi', 'Thriller', 'Western']
+              'Mystery', 'Romance', 'Sci-Fi', 'Thriller', 'Western','test-all']
 
 
 def read_corpus(label, label_dir, text_dir):
@@ -131,7 +129,7 @@ def extract_features(instance):
     feature_set = {}
     text = instance.text
 
-    new_feature_set = 1
+
     # VERY BAD FEATURE SET
     if new_feature_set:
         feature_set["firstword"] = text.split()[0]
@@ -140,10 +138,10 @@ def extract_features(instance):
         feature_set["lastletter"] = text[-1]
         return feature_set
 
-    # 5 MOST COMMON NOUNS
+    # VERBS
     else:
 
-        tokens = word_tokenize(text) # tokenize text
+        tokens = word_tokenize(text)  # tokenize text
         patterns = [
             (r'.*ing$', 'VBG'),  # gerunds
             (r'(The|the|A|a|An|an)$', 'AT'),  # articles
@@ -159,15 +157,15 @@ def extract_features(instance):
             (r'.*', 'NN')  # nouns (default)
         ]
 
-        # BAD POS TAGGER
-
+        # REALLY BAD POS TAGGER
         tagger = nltk.RegexpTagger(patterns)
         tagged_data = tagger.tag(tokens)
-        print tagged_data
 
-        freqDist = nltk.FreqDist(tokens)
-        freqDist._sort_keys_by_value()
-        print freqDist
+        # get all words tagged as verbs for features
+        for word in tagged_data:  # for all words in our tagged data set
+            if (word[1] == "VBD" or word[1] == "VBZ"):
+                feature_set[word[0]] = word[1]
+        return feature_set
 
 
 def make_training_data(data):
@@ -218,46 +216,43 @@ def analyze_error(classifier, dev_d, category):
 
     # construct confusion matrix with given arrays
     cm = nltk.ConfusionMatrix(actual, guess)
-    print(cm.pp(sort_by_count=True))
+    # print(cm.pp(sort_by_count=True))
 
     # get counts for calculations
     TP = cm.__getitem__([category, category])  # true positive (our prediction was correct)
     FP = cm.__getitem__([category, not_category])  # false positive (we predict "Not" when the opposite is true)
     FN = cm.__getitem__([not_category, category])  # false negitive (vice versa)
 
-    # lol this writes just like pseudo-code
-    precision = TP / (TP + FP)
-    recall = TP / (TP + FN)
-    f_score = (2 * precision * recall) / (precision + recall)
+    # get accuracy
+    accuracy = nltk.classify.accuracy(classifier, dev_d)
 
-    # Print error results
-    print "Accuracy: ", nltk.classify.accuracy(classifier, dev_d)
-    print "Precision: ", precision
-    print "Recall: ", recall
-    print "F-Measure: ", f_score
+    # check for divide by zeros
+    if FN > 0 and FP > 0 and TP > 0:
+        precision = TP / (TP + FP)
+        recall = TP / (TP + FN)
+        f_score = (2 * precision * recall) / (precision + recall)
+        return [accuracy, precision, recall, f_score]
+    else:
+        f_score = 0
+        if not TP:
+            return [accuracy, 0, 0, f_score]
+        if not FP:
+            precision = 0
+            if not FN:
+                recall = 0
+            recall = TP / (TP + FN)
+            return [accuracy, precision, recall, f_score]
+        if not FN:
+            recall = 0
+            if not FP:
+                precision = 0
+            precision = TP / (TP + FP)
+            return [accuracy, precision, recall, f_score]
 
-
-if __name__ == '__main__':
-    import argparse
-    import random
-
-    parser = argparse.ArgumentParser(description='Classify movie categories.')
-    parser.add_argument('category', action='store', type=str,
-                        help="One of 10 Genre Categories: %s" % categories)
-
-    # args = parser.parse_args()
-    args = parser.parse_args(['Action'])
-    category = args.category
-
-    if not category in categories:
-        sys.stderr.write("Illegal genre category: %s\n" % category)
-        parser.print_help()
-        sys.exit()
-
-
+def mainloop(category):
     # load up the training and test data (arrays of Instances)
     training_data = read_corpus(category, 'labels/training', 'records')
-    test_data = read_corpus(category, 'labels/test', 'records')  # ignore this for now
+    #test_data = read_corpus(category, 'labels/test', 'records')
 
     # split training data into train and dev sets
     training_set, dev_set = split_data(training_data, category, .3)
@@ -270,7 +265,81 @@ if __name__ == '__main__':
     dev_d = make_training_data(dev_set)
 
     # find out how bad it is using confusion matrix
-    analyze_error(classifier, dev_d, category)  # figure out counts for TP and TN
+    results = analyze_error(classifier, dev_d, category)  # figure out counts for TP and TN
+    return results
+
+def test_set(category):
+    # load up the training and test data (arrays of Instances)
+    training_data = read_corpus(category, 'labels/training', 'records')
+    test_data = read_corpus(category, 'labels/test', 'records')
+
+    # create our classifier using our feature set
+    train_d = make_training_data(training_data)
+    classifier = make_classifier(train_d)
+
+    # get our dev set to test our classifier on
+    dev_d = make_training_data(test_data)
+
+    # find out how bad it is using confusion matrix
+    results = analyze_error(classifier, dev_d, category)  # figure out counts for TP and TN
+    return results
+
+# ACTUAL MAIN
+if __name__ == '__main__':
+    import argparse
+    import random
+
+    parser = argparse.ArgumentParser(description='Classify movie categories.')
+    parser.add_argument('category', action='store', type=str,
+                        help="One of 10 Genre Categories: %s" % categories)
+
+    args = parser.parse_args()
+    #args = parser.parse_args(['test-all'])
+    category = args.category
+
+    if not category in categories:
+        sys.stderr.write("Illegal genre category: %s\n" % category)
+        parser.print_help()
+        sys.exit()
+
+    if category == "test-all":
+        categories.remove("test-all") # to avoid errors
+        for category in categories: # for all categories
+            # get a bunch of results after running on dev data
+            result_set = []
+            for i in range(20):
+                results = mainloop(category)
+                # print "trial: ", i, " ", results
+                if results.__len__() == 4:  # not exactly sure why this happens
+                    result_set.append(results)
+                else:
+                    continue
+
+            # get the mean of each of the values (acc,prec,recall,f-score)
+            sum_accuracy = 0
+            sum_precision = 0
+            sum_recall = 0
+            sum_fscore = 0
+            for result in result_set:
+                sum_accuracy += result[0]
+                sum_precision += result[1]
+                sum_recall += result[2]
+                sum_fscore += result[3]
+
+            print "averages after running 20 trials using dev set on category :", category
+            print "avg accuracy  : ", sum_accuracy / result_set.__len__()
+            print "avg precision : ", sum_precision / result_set.__len__()
+            print "avg recall    : ", sum_recall / result_set.__len__()
+            print "avg f-score   : ", sum_fscore / result_set.__len__()
+
+    else:
+        results = test_set(category)
+        print "Accuracy : ", results[0]
+        print "Precision: ", results[1]
+        print "Recall   : ", results[2]
+        print "F-Score  : ", results[3]
+
+
 
 
 

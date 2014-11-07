@@ -1,0 +1,203 @@
+Michael Meding
+NLP Homework #3 Results
+11/7/14
+
+    (a) The list of features initially implemented
+	For this I decided to just use what was already there which from the example code was,
+
+feature_set["firstword"] = text.split()[0]
+feature_set["firstletter"] = text[0]
+feature_set["lastword"] = text.split()[-1]
+feature_set["lastletter"] = text[-1]	
+
+    (b) Initial results on the development set (Precision, Recall, F-measure for each genre)
+	As expected the results from this sucked. (I ran a set of 20 trials per genre and computed the averages for each)
+	
+averages after running 20 trials using dev set on category : Action
+avg accuracy  :  0.557142857143
+avg precision :  0.3
+avg recall    :  0.389761904762
+avg f-score   :  0.290367965368
+averages after running 20 trials using dev set on category : Adventure
+avg accuracy  :  0.414285714286
+avg precision :  0.271428571429
+avg recall    :  0.343511904762
+avg f-score   :  0.283137973138
+averages after running 20 trials using dev set on category : Comedy
+avg accuracy  :  0.442857142857
+avg precision :  0.235714285714
+avg recall    :  0.370595238095
+avg f-score   :  0.276537351537
+averages after running 20 trials using dev set on category : Drama
+avg accuracy  :  0.539285714286
+avg precision :  0.378571428571
+avg recall    :  0.519345238095
+avg f-score   :  0.418604173604
+averages after running 20 trials using dev set on category : Fantasy
+avg accuracy  :  0.464285714286
+avg precision :  0.242857142857
+avg recall    :  0.315833333333
+avg f-score   :  0.249234654235
+averages after running 20 trials using dev set on category : Mystery
+avg accuracy  :  0.439285714286
+avg precision :  0.192857142857
+avg recall    :  0.329761904762
+avg f-score   :  0.224105339105
+averages after running 20 trials using dev set on category : Romance
+avg accuracy  :  0.55
+avg precision :  0.578571428571
+avg recall    :  0.547081529582
+avg f-score   :  0.504328156364
+averages after running 20 trials using dev set on category : Sci-Fi
+avg accuracy  :  0.457142857143
+avg precision :  0.5
+avg recall    :  0.455130980131
+avg f-score   :  0.407591282127
+averages after running 20 trials using dev set on category : Thriller
+avg accuracy  :  0.478571428571
+avg precision :  0.514285714286
+avg recall    :  0.468228715729
+avg f-score   :  0.465669048444
+averages after running 20 trials using dev set on category : Western
+avg accuracy  :  0.621428571429
+avg precision :  0.607142857143
+avg recall    :  0.593095238095
+avg f-score   :  0.520041832522
+	
+    (c) The final list of features
+	I actually spent a ton of time getting a POS tagger to work. Eventually I ended up getting a bad one working that identified some basic verbs which I used for my final feature set. My algorithim for which was this,
+
+tokens = word_tokenize(text)  # tokenize text
+        patterns = [
+            (r'.*ing$', 'VBG'),  # gerunds
+            (r'(The|the|A|a|An|an)$', 'AT'),  # articles
+            (r'.*able$', 'JJ'),  # adjectives
+            (r'.*ness$', 'NN'),  # nouns formed from adjectives
+            (r'.*ly$', 'RB'),  # adverbs
+            (r'.*ed$', 'VBD'),  # simple past
+            (r'.*es$', 'VBZ'),  # 3rd singular present
+            (r'.*ould$', 'MD'),  # modals
+            (r'.*\'s$', 'NN$'),  # possessive nouns
+            (r'.*s$', 'NNS'),  # plural nouns
+            (r'^-?[0-9]+(.[0-9]+)?$', 'CD'),  # cardinal numbers
+            (r'.*', 'NN')  # nouns (default)
+        ]
+
+        # REALLY BAD POS TAGGER
+        tagger = nltk.RegexpTagger(patterns)
+        tagged_data = tagger.tag(tokens)
+        
+        # get all words tagged as verbs for features        
+        for word in tagged_data:  # for all words in our tagged data set
+            if (word[1] == "VBD" or word[1] == "VBZ"):
+                feature_set[word[0]] = word[1]
+        return feature_set
+
+    (d) Final results on the development set (Precision, Recall, F-measure for each genre)
+	After getting my POS tagger working plus the detailed analsys I ended up with noticeable improvment over the first set of trials. 
+
+averages after running 20 trials using dev set on category : Action
+avg accuracy  :  0.532142857143
+avg precision :  0.614285714286
+avg recall    :  0.541616161616
+avg f-score   :  0.567871360665
+averages after running 20 trials using dev set on category : Adventure
+avg accuracy  :  0.425
+avg precision :  0.364285714286
+avg recall    :  0.402249278499
+avg f-score   :  0.369735566721
+averages after running 20 trials using dev set on category : Comedy
+avg accuracy  :  0.567857142857
+avg precision :  0.657142857143
+avg recall    :  0.562041847042
+avg f-score   :  0.596547651695
+averages after running 20 trials using dev set on category : Drama
+avg accuracy  :  0.507142857143
+avg precision :  0.635714285714
+avg recall    :  0.506993145743
+avg f-score   :  0.559768274381
+averages after running 20 trials using dev set on category : Fantasy
+avg accuracy  :  0.653571428571
+avg precision :  0.6
+avg recall    :  0.585714285714
+avg f-score   :  0.559950882451
+averages after running 20 trials using dev set on category : Mystery
+avg accuracy  :  0.485714285714
+avg precision :  0.621428571429
+avg recall    :  0.483940920191
+avg f-score   :  0.538028172808
+averages after running 20 trials using dev set on category : Romance
+avg accuracy  :  0.564285714286
+avg precision :  0.592857142857
+avg recall    :  0.544759129759
+avg f-score   :  0.495974372205
+averages after running 20 trials using dev set on category : Sci-Fi
+avg accuracy  :  0.585714285714
+avg precision :  0.607142857143
+avg recall    :  0.579523809524
+avg f-score   :  0.581519080764
+averages after running 20 trials using dev set on category : Thriller
+avg accuracy  :  0.392857142857
+avg precision :  0.535714285714
+avg recall    :  0.412487373737
+avg f-score   :  0.462097875035
+averages after running 20 trials using dev set on category : Western
+avg accuracy  :  0.760714285714
+avg precision :  0.614285714286
+avg recall    :  0.696756854257
+avg f-score   :  0.549580909287
+
+    (e) Final results on the test set (Precision, Recall, F-measure for each genre)
+	Not as great as I would have hoped... Unless it was a Western film. For whatever reason they seem to use the most simple verbs in descriptions.
+
+mike@HAL-9000 ~/Documents/NLP/HW3/IMDBGenreClassifier $ ./example.py Action
+Accuracy :  0.45
+Precision:  0.5
+Recall   :  0.454545454545
+F-Score  :  0.47619047619
+mike@HAL-9000 ~/Documents/NLP/HW3/IMDBGenreClassifier $ ./example.py Adventure
+Accuracy :  0.5
+Precision:  0.4
+Recall   :  0.5
+F-Score  :  0.444444444444
+mike@HAL-9000 ~/Documents/NLP/HW3/IMDBGenreClassifier $ ./example.py Comedy
+Accuracy :  0.5
+Precision:  0.6
+Recall   :  0.5
+F-Score  :  0.545454545455
+mike@HAL-9000 ~/Documents/NLP/HW3/IMDBGenreClassifier $ ./example.py Drama
+Accuracy :  0.5
+Precision:  0.6
+Recall   :  0.5
+F-Score  :  0.545454545455
+mike@HAL-9000 ~/Documents/NLP/HW3/IMDBGenreClassifier $ ./example.py Fantasy
+Accuracy :  0.5
+Precision:  0.5
+Recall   :  0.5
+F-Score  :  0.5
+mike@HAL-9000 ~/Documents/NLP/HW3/IMDBGenreClassifier $ ./example.py Mystery
+Accuracy :  0.5
+Precision:  0.7
+Recall   :  0.5
+F-Score  :  0.583333333333
+mike@HAL-9000 ~/Documents/NLP/HW3/IMDBGenreClassifier $ ./example.py Romance
+Accuracy :  0.5
+Precision:  0.7
+Recall   :  0.5
+F-Score  :  0.583333333333
+mike@HAL-9000 ~/Documents/NLP/HW3/IMDBGenreClassifier $ ./example.py Sci-Fi
+Accuracy :  0.4
+Precision:  0.6
+Recall   :  0.428571428571
+F-Score  :  0.5
+mike@HAL-9000 ~/Documents/NLP/HW3/IMDBGenreClassifier $ ./example.py Thriller
+Accuracy :  0.45
+Precision:  0.5
+Recall   :  0.454545454545
+F-Score  :  0.47619047619
+mike@HAL-9000 ~/Documents/NLP/HW3/IMDBGenreClassifier $ ./example.py Western
+Accuracy :  0.8
+Precision:  0.8
+Recall   :  0.8
+F-Score  :  0.8
+
